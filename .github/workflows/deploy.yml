@@ -1,0 +1,22 @@
+name: Deploy to Local VM
+
+on:
+  push:
+    branches: [ "main" ]  # Run this whenever code is pushed to 'main'
+
+jobs:
+  deploy:
+    runs-on: self-hosted  # This tells GitHub to use YOUR VM, not theirs!
+
+    steps:
+    - name: Check out the code
+      uses: actions/checkout@v3
+
+    - name: Rebuild and Restart Website
+      run: |
+        # 1. Pull the latest images (if any)
+        docker compose pull
+        
+        # 2. Restart the container with the new code
+        # --build forces it to recreate the container if files changed
+        docker compose up -d --build
