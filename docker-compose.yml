@@ -1,0 +1,12 @@
+version: '3.8'  # The dialect of Docker Compose we are using
+
+services:       # A list of the "machines" we want to run
+  
+  my-web-server:                # Name of our service
+    image: nginx:alpine         # The Software: Nginx (Alpine is a tiny, fast version)
+    container_name: production-website
+    restart: always             # If it crashes, restart it automatically
+    ports:
+      - "80:80"                 # Map Port 80 (VM) to Port 80 (Container)
+    volumes:
+      - ./website:/usr/share/nginx/html  # The Magic Link (Host Folder : Container Folder)
