@@ -3,13 +3,13 @@ version: '3.8'  # The dialect of Docker Compose we are using
 services:       # A list of the "machines" we want to run
 # Service 1: Your Public Website (The "Hello World" Page)
   my-web-server:                # Name of our service
-    image: nginx:alpine         # The Software: Nginx (Alpine is a tiny, fast version)
+    build: ./app             # 👈 Build the Dockerfile in the 'app' folder
     container_name: production-website
-    restart: always             # If it crashes, restart it automatically
+    restart: always
     ports:
-      - "80:80"                 # Map Port 80 (VM) to Port 80 (Container)
-    volumes:
-      - ./website:/usr/share/nginx/html  # The Magic Link (Host Folder : Container Folder)
+      - "80:5000"            # 👈 Map VM Port 80 to Container Port 5000 (Flask)
+    # We don't need volumes for code anymore because it's baked into the image
+
 # Service 2: The Monitoring Dashboard (Uptime Kuma)
   uptime-kuma:
     image: louislam/uptime-kuma:1
