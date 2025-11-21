@@ -15,4 +15,4 @@ COPY . .
 EXPOSE 5000
 
 # Command to run the app
-CMD ["python", "main.py"]
+CMD ["sh", "-c", "sleep 10 && python main.py"]
