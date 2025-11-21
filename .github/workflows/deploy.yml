@@ -15,8 +15,8 @@ jobs:
     - name: Rebuild and Restart Website
       run: |
         # 1. Pull the latest images (if any)
-        docker compose pull
-        
+        docker-compose pull
+
         # 2. Restart the container with the new code
-        # --build forces it to recreate the container if files changed
-        docker compose up -d --build
+        # --build  i forces it to recreate the container if files changed
+        docker-compose up -d --build
