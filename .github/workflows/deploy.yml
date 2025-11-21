@@ -19,4 +19,11 @@ jobs:
 
         # 2. Restart the container with the new code
         # --build  i forces it to recreate the container if files changed
-        docker-compose up -d --build
+        - name: Rebuild and Restart Website
+          run: |
+            # 1. Pull the latest images (if any)
+            docker-compose pull
+
+            # 2. Restart the container with the new code
+            # Force-recreate stops and replaces the existing container cleanly
+            docker-compose up -d --build --force-recreate --remove-orphans
