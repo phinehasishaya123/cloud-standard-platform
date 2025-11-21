@@ -57,16 +57,22 @@ def get_status():
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute('SELECT id, name, status FROM subsidiaries;')
-    rows = cur.fetchall()
+
+    # 1. Fetch the data from the cursor
+    subsidiary_rows = cur.fetchall() # Renamed variable for clarity
+
     cur.close()
     conn.close()
 
-    # Convert Database rows to JSON
+    # 2. Convert Database rows (tuples) to a list of Dictionaries (JSON structure)
     results = []
-    for row in rows:
-        results.append({"id": row[0], "name": row[1], "status": row[2]})
+    # Loop through the fetched rows (now named 'subsidiary_rows')
+    for row in subsidiary_rows: 
+        results.append({
+            "id": row[0], 
+            "name": row[1], 
+            "status": row[2]
+        })
 
-    return jsonify(subsidiaries)
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    # 3. Return the fully processed list
+    return jsonify(results) # We must return 'results', not 'subsidiaries'
