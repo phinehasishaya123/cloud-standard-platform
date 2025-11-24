@@ -1,31 +1,23 @@
 services:
+      
       production-website:
         build: ./app
-        container_name: production-website_worker
-        restart: always
-        expose:
-          - "5000"
-        deploy:
-          replicas: 3 # 👈 CRITICAL: Run 3 copies of the app
-        environment:
-          DB_HOST: company-database
-          POSTGRES_DB: ${DB_NAME}
-          POSTGRES_USER: ${DB_USER}
-          POSTGRES_PASSWORD: ${DB_PASSWORD}
-        depends_on:
-          company-database:
-            condition: service_healthy
-
-      nginx:
-        image: nginx:stable-alpine
-        container_name: production-nginx
+        container_name: production-website
         restart: always
         ports:
-          - "80:80" # 👈 Nginx is now the internet-facing component on Port 80
-        volumes:
-          - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf # 👈 Mount our config
+          - "80:5000"
+        environment:
+          # IMPORTANT: Use the SERVICE NAME as the host
+          DB_HOST: company-database 
+          POSTGRES_DB: ${DB_NAME}
+          POSTGRES_USER: ${DB_USER}
+          # Use a strong, known password here. Let's make it simple for the lab:
+          POSTGRES_PASSWORD: ${DB_PASSWORD}
         depends_on:
-          - production-website # 👈 Make sure the apps are ready before Nginx starts
+          # ENSURE the app waits for the DB to be healthy
+          company-database:
+            condition: service_healthy
+    
       company-database:
         image: postgres:13-alpine
         container_name: company-database
