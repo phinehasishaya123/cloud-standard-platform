@@ -1,72 +1,98 @@
 import os
+import time
 import psycopg2
-from flask import Flask, jsonify
+from flask import Flask, jsonify, render_template
 
 app = Flask(__name__)
 
-# 1. Get DB details from Environment Variables (The Cloud Way)
-DB_HOST = os.environ.get('DB_HOST')
-DB_NAME = os.environ.get('DB_NAME')
-DB_USER = os.environ.get('DB_USER')
-DB_PASS = os.environ.get('DB_PASS')
+# --- Database Configuration ---
+# Variables loaded from docker-compose.yml environment section
+DB_NAME = os.environ.get('POSTGRES_DB', 'companydb')
+DB_USER = os.environ.get('POSTGRES_USER', 'user')
+DB_PASSWORD = os.environ.get('POSTGRES_PASSWORD', 'password')
+DB_HOST = os.environ.get('DB_HOST', 'company-database') # This MUST match the service name in docker-compose.yml
+
+# --- Database Connection Functions ---
 
 def get_db_connection():
-    conn = psycopg2.connect(
+    """Establishes a connection to the PostgreSQL database."""
+    return psycopg2.connect(
         host=DB_HOST,
         database=DB_NAME,
         user=DB_USER,
-        password=DB_PASS
+        password=DB_PASSWORD
     )
-    return conn
 
-# 2. Initialize the Database (Create Table if not exists)
 def init_db():
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS subsidiaries (
-                id SERIAL PRIMARY KEY,
-                name VARCHAR(100),
-                status VARCHAR(50)
-            );
-        """)
-        # Add initial data if empty
-        cur.execute("SELECT count(*) FROM subsidiaries;")
-        if cur.fetchone()[0] == 0:
-            cur.execute("INSERT INTO subsidiaries (name, status) VALUES (%s, %s)", ('Subsidiary A', 'Operational'))
-            cur.execute("INSERT INTO subsidiaries (name, status) VALUES (%s, %s)", ('Subsidiary B', 'Maintenance'))
+    """Initializes the database by creating the subsidiaries table and inserting initial data."""
+    # Attempt connection with a retry loop, necessary for Docker startup dependencies
+    max_retries = 5
+    for i in range(max_retries):
+        try:
+            conn = get_db_connection()
+            cur = conn.cursor()
 
-        conn.commit()
-        cur.close()
-        conn.close()
-        print("Database initialized successfully!")
-    except Exception as e:
-        print(f"Error initializing DB: {e}")
+            # Create the table if it doesn't exist (ensures persistence works)
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS subsidiaries (
+                    id SERIAL PRIMARY KEY,
+                    name VARCHAR(100) NOT NULL,
+                    status VARCHAR(50) NOT NULL
+                );
+            """)
 
-# Run init on startup
-init_db()
+            # Check if data already exists to prevent duplicate entries on restart
+            cur.execute("SELECT COUNT(*) FROM subsidiaries;")
+            if cur.fetchone()[0] == 0:
+                cur.execute("""
+                    INSERT INTO subsidiaries (name, status) VALUES
+                        ('Subsidiary A', 'Operational'),
+                        ('Subsidiary B', 'Maintenance'),
+                        ('Subsidiary C', 'Operational');
+                """)
+                print("Initial data inserted.")
+            
+            conn.commit()
+            cur.close()
+            conn.close()
+            print("Database initialized successfully!")
+            return # Exit the function after successful initialization
+
+        except psycopg2.OperationalError as e:
+            if i < max_retries - 1:
+                print(f"Error initializing DB: {e}. Retrying in 5 seconds...")
+                time.sleep(5)
+            else:
+                print(f"Failed to connect to database after {max_retries} attempts.")
+                raise e # Re-raise error if all retries fail
+
+# --- Flask Routes ---
 
 @app.route('/')
-
-def home():
-    return "<h1>Central IT Hub - Connected to PostgreSQL Database</h1>"
+def index():
+    """Serves the simple HTML front page."""
+    return render_template('index.html')
 
 @app.route('/api/status')
 def get_status():
+    """
+    Fetches the status of all subsidiaries from the database and returns it as JSON.
+    This function was fixed to resolve the NameError.
+    """
     conn = get_db_connection()
     cur = conn.cursor()
+    
+    # 1. Execute the SQL query
     cur.execute('SELECT id, name, status FROM subsidiaries;')
-
-    # 1. Fetch the data from the cursor
-    subsidiary_rows = cur.fetchall() # Renamed variable for clarity
+    
+    # 2. Fetch all rows from the cursor
+    subsidiary_rows = cur.fetchall() 
 
     cur.close()
     conn.close()
 
-    # 2. Convert Database rows (tuples) to a list of Dictionaries (JSON structure)
+    # 3. Convert Database rows (tuples) to a list of Dictionaries (JSON structure)
     results = []
-    # Loop through the fetched rows (now named 'subsidiary_rows')
     for row in subsidiary_rows: 
         results.append({
             "id": row[0], 
@@ -74,5 +100,14 @@ def get_status():
             "status": row[2]
         })
 
-    # 3. Return the fully processed list
-    return jsonify(results) # We must return 'results', not 'subsidiaries'
+    # 4. Return the fully processed list
+    return jsonify(results) 
+
+# --- Application Startup ---
+if __name__ == '__main__':
+    # Initialize the database and then run the Flask app.
+    # Docker entrypoint uses 'sh -c 'sleep 10 && python main.py'' 
+    # to ensure the database starts first.
+    init_db()
+    # This line ensures the process stays running to serve HTTP requests.
+    app.run(host='0.0.0.0', port=5000)
