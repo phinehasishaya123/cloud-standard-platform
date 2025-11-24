@@ -13,10 +13,18 @@ jobs:
       uses: actions/checkout@v3
 
     - name: Rebuild and Restart Website
+          # ⬇️ INJECT SECRETS HERE ⬇️
+      env:
+        DB_USER: ${{ secrets.DB_USER }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        DB_NAME: ${{ secrets.DB_NAME }}
       run: |
-        # 1. Pull the latest images (if any) please work
+        # 1. Pull the latest images
         docker-compose pull
 
+        # 2. TEAR DOWN: Stop and remove the old running container/network.
         docker-compose down --remove-orphans
 
-        docker-compose up -d --build 
+          # 3. BUILD & START: Create and start the new container stack.
+          # Docker Compose will automatically read the variables we defined in 'env:' above
+        docker-compose up -d --build
