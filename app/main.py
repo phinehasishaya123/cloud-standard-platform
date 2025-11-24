@@ -103,11 +103,12 @@ def get_status():
     # 4. Return the fully processed list
     return jsonify(results) 
 
+init_db()
 # --- Application Startup ---
 if __name__ == '__main__':
     # Initialize the database and then run the Flask app.
     # Docker entrypoint uses 'sh -c 'sleep 10 && python main.py'' 
     # to ensure the database starts first.
-    init_db()
+    #init_db()
     # This line ensures the process stays running to serve HTTP requests.
-    #app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000)
