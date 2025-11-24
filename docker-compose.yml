@@ -1,7 +1,7 @@
 services:
       production-website:
         build: ./app
-        container_name: production-website_worker
+        #container_name: production-website_worker
         restart: always
         expose:
           - "5000"
