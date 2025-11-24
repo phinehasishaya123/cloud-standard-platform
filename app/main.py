@@ -9,7 +9,7 @@ app = Flask(__name__)
 # Variables loaded from docker-compose.yml environment section
 DB_NAME = os.environ.get('POSTGRES_DB', 'companydb')
 DB_USER = os.environ.get('POSTGRES_USER', 'user')
-DB_PASSWORD = os.environ.get('POSTGRES_PASSWORD', 'password')
+DB_PASSWORD = os.environ.get('POSTGRES_PASSWORD', '&&1234HT')
 DB_HOST = os.environ.get('DB_HOST', 'company-database') # This MUST match the service name in docker-compose.yml
 
 # --- Database Connection Functions ---

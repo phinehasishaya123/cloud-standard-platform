@@ -1,43 +1,38 @@
-version: '3.8'
-
 services:
-  # 1. The Logic (Python API) - SIMPLE DEPENDENCY
-  my-web-server:
-    build: ./app
-    container_name: production-website
-    restart: always
-    ports:
-      - "80:5000"
-    depends_on:
-      - db  # This MUST be a simple list item
-    environment:
-      - DB_HOST=db
-      - DB_NAME=company_db
-      - DB_USER=admin
-      - DB_PASS=&&1234HT
-
-  # 2. The Data (PostgreSQL) - NO HEALTHCHECK
-  db:
-    image: postgres:13-alpine
-    container_name: company-database
-    restart: always
-    environment:
-      - POSTGRES_DB=company_db
-      - POSTGRES_USER=admin
-      - POSTGRES_PASSWORD=&&1234HT
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-
-  # 3. The Monitor (Uptime Kuma)
-  uptime-kuma:
-    image: louislam/uptime-kuma:1
-    container_name: monitoring-dashboard
-    restart: always
-    ports:
-      - "3001:3001"
-    volumes:
-      - uptime-kuma-data:/app/data
-
-volumes:
-  uptime-kuma-data:
-  postgres-data:
+      production-website:
+        build: ./app
+        container_name: production-website
+        restart: always
+        ports:
+          - "80:5000"
+        environment:
+          # IMPORTANT: Use the SERVICE NAME as the host
+          DB_HOST: company-database 
+          POSTGRES_DB: companydb
+          POSTGRES_USER: user
+          # Use a strong, known password here. Let's make it simple for the lab:
+          POSTGRES_PASSWORD: &&1234HT
+        depends_on:
+          # ENSURE the app waits for the DB to be healthy
+          company-database:
+            condition: service_healthy
+    
+      company-database:
+        image: postgres:13-alpine
+        container_name: company-database
+        # ... (rest of the DB config remains the same) ...
+        restart: always
+        volumes:
+          - company_data:/var/lib/postgresql/data
+        environment:
+          POSTGRES_DB: companydb
+          POSTGRES_USER: user
+          # ENSURE this password matches the one in production-website environment block!
+          POSTGRES_PASSWORD: &&1234HT
+        healthcheck:
+          test: ["CMD-SHELL", "pg_isready -U user"]
+          interval: 5s
+          timeout: 5s
+          retries: 5
+    
+      # ... (monitoring-dashboard service remains the same) ...
