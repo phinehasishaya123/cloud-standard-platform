@@ -1,35 +1,81 @@
-name: Deploy to Local VM
+name: Continuous Deployment
+
+
 
 on:
+
   push:
-    branches: [ "main" ]  # Run this whenever code is pushed to 'main'
+
+    branches:
+
+      - main
+
+  workflow_dispatch:
+
+
 
 jobs:
+
   deploy:
-    runs-on: self-hosted  # This tells GitHub to use YOUR VM, not theirs!
+
+    runs-on: self-hosted
+
+
 
     steps:
+
       - uses: actions/checkout@v3
 
-      - name: Fix Volume Permissions
-        run: |
-          sudo rm -rf monitoring-data
-          mkdir monitoring-data
+
+
       # ----------------------------------------------------
 
-      - name: Rebuild and Restart Website
-        env:
-          DB_USER: ${{ secrets.DB_USER }}
-      # ... (rest of the file remains the same)
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          DB_NAME: ${{ secrets.DB_NAME }}
-      run: |
-        # 1. Pull the latest images
-        docker-compose pull
+      # FIX: Forcefully remove and recreate the monitoring volume folder 
 
-        # 2. TEAR DOWN: Stop and remove the old running container/network.
-        docker-compose down --remove-orphans
+      # to bypass the root permission lock (EACCES error).
+
+      - name: Fix Volume Permissions
+
+        run: |
+
+          sudo rm -rf monitoring-data
+
+          mkdir monitoring-data
+
+      # ----------------------------------------------------
+
+          
+
+      - name: Rebuild and Restart Website
+
+        env:
+
+          # Inject secrets as environment variables for Docker Compose to read
+
+          DB_USER: ${{ secrets.DB_USER }}
+
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+
+          DB_NAME: ${{ secrets.DB_NAME }}
+
+        
+
+        run: |
+
+          # 1. Pull the latest images
+
+          docker-compose pull
+
+
+
+          # 2. TEAR DOWN: Stop and remove the old running container/network.
+
+          docker-compose down --remove-orphans
+
+
 
           # 3. BUILD & START: Create and start the new container stack.
-          # Docker Compose will automatically read the variables we defined in 'env:' above
-        docker-compose up -d --build
+
+          # The database credentials are read from the 'env:' block above.
+
+          docker-compose up -d --build
