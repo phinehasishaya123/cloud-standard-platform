@@ -28,7 +28,7 @@ services:
           POSTGRES_DB: companydb
           POSTGRES_USER: user
           # ENSURE this password matches the one in production-website environment block!
-          POSTGRES_PASSWORD: &&1234HT
+          POSTGRES_PASSWORD: "&&1234HT"
         healthcheck:
           test: ["CMD-SHELL", "pg_isready -U user"]
           interval: 5s
