@@ -110,4 +110,4 @@ if __name__ == '__main__':
     # to ensure the database starts first.
     init_db()
     # This line ensures the process stays running to serve HTTP requests.
-    app.run(host='0.0.0.0', port=5000)
+    #app.run(host='0.0.0.0', port=5000)
