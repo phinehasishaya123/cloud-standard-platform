@@ -50,7 +50,7 @@ services:
         ports:
           - "3001:3001"
         volumes:
-          - ./monitoring-data:/app/data
+          - /home/phinehas/monitoring-data:/app/data
 
 volumes: 
   company_data:    
