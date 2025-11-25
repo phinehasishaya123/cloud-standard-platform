@@ -58,8 +58,7 @@ services:
         volumes:
           - redis_data:/data # Volume for persistent Redis data
         command: redis-server --appendonly yes # Use AOF for data persistence
-          *(Ensure correct YAML indentation)*
-
+          
 volumes: 
   company_data:    
       # ... (monitoring-dashboard service remains the same) ...
