@@ -6,7 +6,7 @@ services:
         expose:
           - "5000"
         deploy:
-          replicas: 3 # 👈 CRITICAL: Run 3 copies of the app
+          replicas: 1 # 👈 CRITICAL: Run 3 copies of the app
         environment:
           DB_HOST: company-database
           POSTGRES_DB: ${DB_NAME}
