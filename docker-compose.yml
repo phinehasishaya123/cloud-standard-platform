@@ -51,7 +51,16 @@ services:
           - "3001:3001"
         volumes:
           - /home/phinehas/monitoring-data:/app/data
+      caching-layer:
+        image: redis:6-alpine
+        container_name: caching-layer
+        restart: always
+        volumes:
+          - redis_data:/data # Volume for persistent Redis data
+        command: redis-server --appendonly yes # Use AOF for data persistence
+          *(Ensure correct YAML indentation)*
 
 volumes: 
   company_data:    
       # ... (monitoring-dashboard service remains the same) ...
+  redis_data: # 👈 New Redis volume
